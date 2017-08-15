@@ -6,15 +6,15 @@ import Cell from '../Cell';
 
 function Row({rowIndex}) {
   return (
-      <tr className={s.tableRow}>
-          <th>{rowIndex + 1}</th>
-          { _.times(10, cellIndex => <Cell key={cellIndex} rowIndex={rowIndex} cellIndex={cellIndex} />) }
-      </tr>
+    <tr className={s.tableRow}>
+      <th>{rowIndex + 1}</th>
+      { _.times(10, cellIndex => <Cell key={cellIndex} rowIndex={rowIndex} cellIndex={cellIndex}/>) }
+    </tr>
   );
 }
 
 Row.propTypes = {
-    rowIndex: PropTypes.number.isRequired
+  rowIndex: PropTypes.number.isRequired
 };
 
 export default Row;
