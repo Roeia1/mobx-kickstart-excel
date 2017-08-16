@@ -1,8 +1,9 @@
-import {observable, action} from 'mobx';
+import {observable, action, computed} from 'mobx';
 
 const state = observable({
   cells: observable.map(),
-  selected: null
+  selected: null,
+  computedCells: observable.map()
 });
 
 const getKey = (rowIndex, cellIndex) => (rowIndex + ',' + cellIndex);
@@ -12,11 +13,33 @@ const getIndexFromKey = key => ({
   cellIndex: key.split(',')[1]
 });
 
-export const getCell = (rowIndex, cellIndex) => state.cells.get(getKey(rowIndex, cellIndex));
+const getCellData = (rowIndex, cellIndex) => state.cells.get(getKey(rowIndex, cellIndex));
 
-export const changeCell = action(data => state.cells.set(state.selected, data));
+const parseData = formula => {
+  if (!formula) {
+    return '';
+  }
+  console.log('compute');
+  let parsedFormula = formula;
+  const regex = /[A-Z]\d+/g;
+  const cells = formula.match(regex);
+  if (cells) {
+    cells.forEach(cell => {
+      parsedFormula = parsedFormula.replace(cell, state.computedCells.get(getKey(cell.charCodeAt(0) - 65, cell.substr(1) - 1)).get());
+    });
+  }
+  return eval(parsedFormula);
+};
 
-export const deleteCell = action((rowIndex, cellIndex) => state.cells.delete(getKey(rowIndex, cellIndex)));
+export const changeCell = action(data => {
+  state.cells.set(state.selected, data);
+  state.computedCells.set(state.selected, computed(() => parseData(data)));
+});
+
+export const deleteCell = action((rowIndex, cellIndex) => {
+  state.cells.delete(getKey(rowIndex, cellIndex));
+  state.computedCells.delete(getKey(rowIndex, cellIndex));
+});
 
 export const isCellSelected = (rowIndex, cellIndex) => getKey(rowIndex, cellIndex) === state.selected;
 
@@ -27,7 +50,10 @@ export const getSelectedCell = () => {
     return '';
   }
   const {rowIndex, cellIndex} = getIndexFromKey(state.selected);
-  return getCell(rowIndex, cellIndex);
+  const cellData = getCellData(rowIndex, cellIndex);
+  return cellData ? cellData : '';
 };
+
+export const getCell = (rowIndex, cellIndex) => state.computedCells.has(getKey(rowIndex, cellIndex)) ? state.computedCells.get(getKey(rowIndex, cellIndex)).get() : '';
 
 window.state = state;
